@@ -343,8 +343,8 @@ void StartDefaultTask(void const * argument)
   /* IP Adresini yazdır */
   printf("DHCP IP: %s\n", ip4addr_ntoa(&gnetif.ip_addr));
 
-  tcpecho_init();
-  udpecho_init();
+  //tcpecho_init();
+  //udpecho_init();
   tftp_init_con();
 
   for(;;)
