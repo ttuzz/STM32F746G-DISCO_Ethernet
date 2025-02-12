@@ -10,8 +10,8 @@
 ---
 
 ## **disco_Lwip_TcpUdp_Echo_Rtos**
-- TCP ve UDP ECHO port 7
-- LWIP ve FreeRTOS
+- TCP and UDP ECHO on port 7
+- LWIP and FreeRTOS
 - Writing and reading tests can be performed using Python scripts
   
 ![Send test](assets/lwip_test.png)
@@ -24,8 +24,8 @@ Speed optimizations were attempted with small changes in buffer settings. Averag
 ---
 
 ## **disco_lwip_tftp_rtos**
-- TFTP sunucusu uygulaması.
-- LWIP ve FreeRTOS
+- TFTP server application
+- LWIP and FreeRTOS
   
 ![TFTP](assets/disco_lwip_tftp_rtos.png)
 
