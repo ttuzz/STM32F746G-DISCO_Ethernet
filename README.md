@@ -1,11 +1,11 @@
 
 # STM32F746G-DISCO Ethernet
 
-This contains basic examples for developing network-based applications using the STM32F746G-DISCO development board. 
-The LAN8742 RMII connection is implemented using FreeRTOS and ThreadX.
-In STM32Cube, I couldn't find speed settings for LAN8742, RMII, LWIP, or NetXDuo.
-DHCP is enabled in the projects.
-No special area allocation was made in the linker scripts.
+- This contains basic examples for developing network-based applications using the STM32F746G-DISCO development board. 
+- The LAN8742 RMII connection is implemented using FreeRTOS and ThreadX.
+- In STM32Cube, I couldn't find speed settings for LAN8742, RMII, LWIP, or NetXDuo.
+- DHCP is enabled in the projects.
+- No special area allocation was made in the linker scripts.
 
 ---
 
