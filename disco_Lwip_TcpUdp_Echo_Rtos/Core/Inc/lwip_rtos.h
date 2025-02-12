@@ -45,8 +45,9 @@
 
 /* Exported functions ------------------------------------------------------- */
 
-void tcpecho_init(void);
-void udpecho_init(void);
+void tcpecho_init();
+void udpecho_init();
+void tcp_raw_send_thread(void *arg);
 /* USER CODE END 0 */
 
 /* Global Variables ----------------------------------------------------------*/

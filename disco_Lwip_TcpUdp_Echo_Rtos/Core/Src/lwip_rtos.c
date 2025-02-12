@@ -1,25 +1,26 @@
 /* USER CODE BEGIN Header */
 /**
  ******************************************************************************
-  * File Name          : LWIP.c
-  * Description        : This file provides initialization code for LWIP
-  *                      middleWare.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ * File Name          : LWIP.c
+ * Description        : This file provides initialization code for LWIP
+ *                      middleWare.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2024 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include <lwip_rtos.h>
+#include "lwip_rtos.h"
+
 #include "lwip/init.h"
 #if (defined ( __CC_ARM ) || defined (__ARMCC_VERSION))  /* MDK ARM Compiler */
 #include "lwip/sio.h"
@@ -69,102 +70,113 @@ extern ip_addr_t gw;
 #define UDPECHO_THREAD_PRIO  (osPriorityAboveNormal)
 
 /* Private functions ---------------------------------------------------------*/
-static void tcpecho_thread(void *arg)
-{
-  struct netconn *conn, *newconn;
-  err_t err;
-  LWIP_UNUSED_ARG(arg);
-  char buffer[100] = {'\0'};
+#define lenlen 4096*4
+volatile char buffer[lenlen] = { '\0' };
 
-  /* Create a new connection identifier. */
-  /* Bind connection to well known port number 7. */
-  conn = netconn_new(NETCONN_TCP);
-  netconn_bind(conn, IP_ADDR_ANY, 7);
+static void tcpecho_thread(void *arg) {
+	struct netconn *conn, *newconn;
+	err_t err;
+	LWIP_UNUSED_ARG(arg);
 
-  LWIP_ERROR("tcpecho: invalid conn", (conn != NULL), return;);
+	/* Create a new connection identifier. */
+	/* Bind connection to well known port number 7. */
+	conn = netconn_new(NETCONN_TCP);
+	netconn_bind(conn, IP_ADDR_ANY, 7);
 
-  /* Tell connection to go into listening mode. */
-  netconn_listen(conn);
+	LWIP_ERROR("tcpecho: invalid conn", (conn != NULL), return;);
 
-  while (1) {
+	/* Tell connection to go into listening mode. */
+	netconn_listen(conn);
 
-    /* Grab new connection. */
-    err = netconn_accept(conn, &newconn);
-    /*printf("accepted new connection %p\n", newconn);*/
-    /* Process the new connection. */
-    if (err == ERR_OK) {
-      struct netbuf *buf;
-      void *data;
-      u16_t len;
+	while (1) {
 
-      while ((err = netconn_recv(newconn, &buf)) == ERR_OK) {
-        /*printf("Recved\n");*/
-        do {
-             /* print received data */
-             strncpy(buffer, buf->p->payload, buf->p->len);
-             printf("%s \n", buffer);
-             netbuf_data(buf, &data, &len);
-             err = netconn_write(newconn, data, len, NETCONN_COPY);
-        } while (netbuf_next(buf) >= 0);
-        netbuf_delete(buf);
-      }
-      /*printf("Got EOF, looping\n");*/
-      /* Close connection and discard connection identifier. */
-      netconn_close(newconn);
-      netconn_delete(newconn);
-    }
-  }
+		/* Grab new connection. */
+		err = netconn_accept(conn, &newconn);
+		/*printf("accepted new connection %p\n", newconn);*/
+		/* Process the new connection. */
+		if (err == ERR_OK) {
+			struct netbuf *buf;
+			void *data;
+			u16_t len;
+
+			while ((err = netconn_recv(newconn, &buf)) == ERR_OK) {
+				netbuf_data(buf, &data, &len);
+
+				if ((len >= 5) && (strncmp(data, "ttuzz", 5) == 0)) {
+					while (err == ERR_OK) {
+						err = netconn_write_partly(newconn, buffer, lenlen,
+								NETCONN_NOCOPY, NULL); // Veri göndermek için netconn_write_partly
+					}
+				} else {
+					/*printf("Recved\n");*/
+					do {
+
+						// strncpy(buffer, buf->p->payload, buf->p->len);
+						// printf("%s \n", buffer);
+						netbuf_data(buf, &data, &len);
+						err = netconn_write(newconn, data, len, NETCONN_COPY);
+					} while (netbuf_next(buf) >= 0);
+				}
+
+				netbuf_delete(buf);
+			}
+			/*printf("Got EOF, looping\n");*/
+			/* Close connection and discard connection identifier. */
+			netconn_close(newconn);
+			netconn_delete(newconn);
+		}
+	}
 }
 
 /*-----------------------------------------------------------------------------------*/
-void tcpecho_init(void)
-{
-  sys_thread_new("tcpecho_thread", tcpecho_thread, NULL, (configMINIMAL_STACK_SIZE*3), TCPECHO_THREAD_PRIO);
+void tcpecho_init(void) {
+	sys_thread_new("tcpecho_thread", tcpecho_thread, NULL,
+			(configMINIMAL_STACK_SIZE * 3), TCPECHO_THREAD_PRIO);
 }
 /*-----------------------------------------------------------------------------------*/
-static void udpecho_thread(void *arg)
-{
-  struct netconn *conn;
-  struct netbuf *buf, *tx_buf;
-  err_t err;
-  LWIP_UNUSED_ARG(arg);
-  char   data[100] = {'\0'};
+static void udpecho_thread(void *arg) {
+	struct netconn *conn;
+	struct netbuf *buf, *tx_buf;
+	err_t err;
+	LWIP_UNUSED_ARG(arg);
+	char data[100] = { '\0' };
 
-  conn = netconn_new(NETCONN_UDP);
-  netconn_bind(conn, IP_ADDR_ANY, 7);
+	conn = netconn_new(NETCONN_UDP);
+	netconn_bind(conn, IP_ADDR_ANY, 7);
 
-  LWIP_ERROR("udpecho: invalid conn", (conn != NULL), return;);
+	LWIP_ERROR("udpecho: invalid conn", (conn != NULL), return;);
 
-  while (1) {
-    err = netconn_recv(conn, &buf);
-    if (err == ERR_OK) {
+	while (1) {
+		err = netconn_recv(conn, &buf);
+		if (err == ERR_OK) {
 
-      /* print received data */
-      strncpy(data, buf->p->payload, buf->p->len);
-      printf("%s \n", data);
+			/* print received data */
+			strncpy(data, buf->p->payload, buf->p->len);
+			printf("%s \n", data);
 
-      tx_buf = netbuf_new();
-      netbuf_alloc(tx_buf, buf->p->tot_len);
+			tx_buf = netbuf_new();
+			netbuf_alloc(tx_buf, buf->p->tot_len);
 
-      pbuf_take(tx_buf->p, (const void *)buf->p->payload, buf->p->tot_len);
+			pbuf_take(tx_buf->p, (const void*) buf->p->payload,
+					buf->p->tot_len);
 
-      err = netconn_sendto(conn, tx_buf, (const ip_addr_t *)&(buf->addr), buf->port);
-      if(err != ERR_OK) {
-        LWIP_DEBUGF(LWIP_DBG_ON, ("netconn_send failed: %d\n", (int)err));
-      } else {
-        LWIP_DEBUGF(LWIP_DBG_ON, ("got %s\n", buffer));
-      }
-      netbuf_delete(tx_buf);
-    }
-    netbuf_delete(buf);
-  }
+			err = netconn_sendto(conn, tx_buf, (const ip_addr_t*) &(buf->addr),
+					buf->port);
+			if (err != ERR_OK) {
+				LWIP_DEBUGF(LWIP_DBG_ON, ("netconn_send failed: %d\n", (int)err));
+			} else {
+				LWIP_DEBUGF(LWIP_DBG_ON, ("got %s\n", buffer));
+			}
+			netbuf_delete(tx_buf);
+		}
+		netbuf_delete(buf);
+	}
 }
 /*-----------------------------------------------------------------------------------*/
-void udpecho_init(void)
-{
-  sys_thread_new("udpecho_thread", udpecho_thread, NULL, (configMINIMAL_STACK_SIZE*2), UDPECHO_THREAD_PRIO);
+void udpecho_init(void) {
+	sys_thread_new("udpecho_thread", udpecho_thread, NULL,
+			(configMINIMAL_STACK_SIZE * 2), UDPECHO_THREAD_PRIO);
 }
-
 
 #endif /* MDK ARM Compiler */
 

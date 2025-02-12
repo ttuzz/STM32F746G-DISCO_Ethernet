@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>disco_Lwip_TcpUdp_Echo_Rtos</name>
+	<name>disco_lwip_tftp_rtos</name>
 	<comment></comment>
 	<projects>
 	</projects>
