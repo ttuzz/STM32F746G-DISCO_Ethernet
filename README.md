@@ -38,3 +38,13 @@ Speed optimizations were attempted with small changes in buffer settings. Averag
 ![NetXDuo](assets/disco_threadX_Tcp_EchoServer.png)
 
 ---
+
+## **LwIP_HTTP_Server_Netconn_RTOS_100mbit**
+- This example is a ready-made STM32Cube example for the **STM32F746G-DISCO** board. I made a small modification to test **read and write speeds**.
+- The example uses an **older revision** of the LwIP library.
+- I couldn't find how to configure the **100 Mbit speed setting** in STM32IDE.
+
+![Send test](assets/Screenshot_5.png)
+![Receive test](assets/Screenshot_6.png)
+
+---
